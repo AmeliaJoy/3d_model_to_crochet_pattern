@@ -1,0 +1,12 @@
+import numpy as np, scipy as sp
+i = np.array([0,1,1,2])
+j = np.array([0,1,2,2])
+k = np.array([1., -1., -2., 1.])
+A = sp.sparse.csr_matrix((k, (i,j)), shape=(3,3))
+precomp = sp.sparse.linalg.splu(A)
+b = np.array([-1., 2., 1.])
+print(f"inv(A)*b = {precomp.solve(b)}")
+c = np.array([3., 1., -1.])
+print(f"inv(A)*c = {precomp.solve(c)}")
+d = np.array([1., 1., -2.])
+print(f"inv(A)*d = {precomp.solve(d)}")
