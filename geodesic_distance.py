@@ -1,4 +1,5 @@
 import gpytoolbox as gpy, numpy as np, polyscope as ps,scipy as sp
+#This code was implemented based on the work of Keenan Crane of CMU,	Clarisse Weischedel of the University of Göttingen, and Max Wardetzky of the University of Göttingen in the paper The Heat Method for Distance Computation at the link https://www.cs.cmu.edu/~kmcrane/Projects/HeatMethod/paperCACM.pdf
 
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
@@ -85,33 +86,35 @@ def divx(V,F,xvec):
     vertices = np.zeros(V.shape[0])
     (np.add.at(vertices,F,divx))
     return vertices
+def geometric(V,F,seed):
     
-V,F = gpy.read_mesh("data/pixelbun.obj")
+    #u = np.ones(V.shape[0]) #gives array of ones with length of the shape of the vertices,  the shape of the vertices is jsut the number of vertices
+    U0 = np.zeros(V.shape[0])
+    U0[seed] = 1000000000000000000
 
-#u = np.ones(V.shape[0]) #gives array of ones with length of the shape of the vertices,  the shape of the vertices is jsut the number of vertices
-U0 = np.zeros(V.shape[0])
-U0[154] = 10000000000000000
+    Lc = -gpy.cotangent_laplacian(V, F)
+    A = (vertex_area(V,F))
 
-Lc = -gpy.cotangent_laplacian(V, F)
-A = (vertex_area(V,F))
+    invA = (inv_vertex_area(V,F))
+    t = 0.000000001
+    Lc = invA*Lc
+    H = sp.sparse.linalg.spsolve(A - t*Lc, U0)
+    print(H)
+    gradu = (ugrad(V,F,H))
 
-invA = (inv_vertex_area(V,F))
-t = 0.00000002
-Lc = invA*Lc
-H = sp.sparse.linalg.spsolve(A - t*Lc, U0)
+    _xvec = xvec(gradu)
+    _divx = divx(V,F,_xvec)
+    Lc = -gpy.cotangent_laplacian(V, F)
+    geodesic = sp.sparse.linalg.spsolve(Lc, _divx)
 
-gradu = (ugrad(V,F,H))
+    return geodesic,_xvec
+V,F = gpy.read_mesh("data/icosphere.obj")
+geodesic,_xvec = geometric(V,F,0)
 
-xvec = xvec(gradu)
-divx = divx(V,F,xvec)
-Lc = -gpy.cotangent_laplacian(V, F)
-geodesic = sp.sparse.linalg.spsolve(Lc, divx)
-
-print(geodesic)
 ps.init()
 ps_penguin = ps.register_surface_mesh("bunny", V, F,
     material='wax')
 ps_penguin.add_scalar_quantity("per vertex y coord", geodesic,enabled=True,isolines_enabled=True)
-ps_penguin.add_vector_quantity("vecs ambient", xvec/100, vectortype='ambient',defined_on="faces")
+ps_penguin.add_vector_quantity("vecs ambient", _xvec/10, vectortype='ambient',defined_on="faces")
 ps.show()
 
