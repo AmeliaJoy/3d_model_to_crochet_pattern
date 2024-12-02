@@ -86,35 +86,33 @@ def divx(V,F,xvec):
     vertices = np.zeros(V.shape[0])
     (np.add.at(vertices,F,divx))
     return vertices
-def geometric(V,F,seed):
+def geodesic_dist(V,F,seed):
     
     #u = np.ones(V.shape[0]) #gives array of ones with length of the shape of the vertices,  the shape of the vertices is jsut the number of vertices
     U0 = np.zeros(V.shape[0])
-    U0[seed] = 1000000000000000000
+    U0[seed] = 10000000000000
 
     Lc = -gpy.cotangent_laplacian(V, F)
     A = (vertex_area(V,F))
 
     invA = (inv_vertex_area(V,F))
-    t = 0.000000001
+    t = 1
     Lc = invA*Lc
     H = sp.sparse.linalg.spsolve(A - t*Lc, U0)
-    print(H)
     gradu = (ugrad(V,F,H))
 
     _xvec = xvec(gradu)
     _divx = divx(V,F,_xvec)
     Lc = -gpy.cotangent_laplacian(V, F)
     geodesic = sp.sparse.linalg.spsolve(Lc, _divx)
-
+    geodesic -= geodesic.min()
     return geodesic,_xvec
-V,F = gpy.read_mesh("data/icosphere.obj")
-geodesic,_xvec = geometric(V,F,0)
-
+'''
+V,F = gpy.read_mesh("data/pixelbun.obj")
+geodesic,_xvec = geodesic_dist(V,F,0)
 ps.init()
-ps_penguin = ps.register_surface_mesh("bunny", V, F,
+ps_penguin = ps.register_surface_mesh("penguin", V, F,
     material='wax')
 ps_penguin.add_scalar_quantity("per vertex y coord", geodesic,enabled=True,isolines_enabled=True)
-ps_penguin.add_vector_quantity("vecs ambient", _xvec/10, vectortype='ambient',defined_on="faces")
-ps.show()
-
+ps_penguin.add_vector_quantity("gradient vecs",_xvec, enabled=True)
+ps.show()'''
