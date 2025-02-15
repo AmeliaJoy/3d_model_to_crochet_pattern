@@ -1,0 +1,3 @@
+[submodule "libigl-polyscope-project-template/deps/libigl"]
+	path = libigl-polyscope-project-template/deps/libigl
+	url = https://github.com/libigl/libigl.git
